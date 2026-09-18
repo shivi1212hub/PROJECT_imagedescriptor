@@ -268,8 +268,5 @@ This project helped me work with:
 * Building an end-to-end AI application using pretrained models
 
 ---
-## SHIVI SANJAY
-
-## Author
 
 **Shivi Sanjay**
