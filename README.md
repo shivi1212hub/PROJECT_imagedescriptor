@@ -1,104 +1,140 @@
 # Photo Search — Search Photos Using Text
 
-This project lets you search through a collection of photos by simply describing what you are looking for.
+A Python application that lets you search through a collection of photos using natural language instead of filenames.
 
-For example, instead of searching for a filename like `IMG_2048.jpg`, you can type:
+Instead of remembering `IMG_2048.jpg`, you can simply type:
 
 > `a dog running on the beach`
 
-The application uses **CLIP** to understand both the images and the text query. **FAISS** is then used to find the images that are most similar to the query. The results are displayed through a simple **Gradio** web interface.
+The project uses **CLIP** to understand both images and text, **FAISS** to perform fast similarity search, and **Gradio** to provide a simple web interface.
 
-## How the Project Works
+---
 
-The project has two main parts:
+## How It Works
 
-1. **Building the image index**
-2. **Searching the images**
+The project has two main stages:
 
-When the index is created, every image in the selected folder is passed through the CLIP image encoder. This produces an embedding (a numerical representation of the image).
+1. **Build the image index**
+2. **Search the indexed images**
 
-These embeddings are stored in a FAISS index along with the corresponding image filenames.
+During indexing:
 
-When a user searches for something, the text is also converted into an embedding using CLIP. FAISS compares this embedding with the stored image embeddings and returns the closest matches.
+* Every image is converted into a **CLIP embedding**.
+* The embeddings are stored inside a **FAISS index**.
+* The corresponding filenames are saved alongside the index.
+
+During search:
+
+* The user's text query is converted into a CLIP text embedding.
+* FAISS compares it with all stored image embeddings.
+* The closest matching photos are returned.
 
 ```text
 Photos
    ↓
-CLIP image encoder
+CLIP Image Encoder
    ↓
-Image embeddings
+Image Embeddings
    ↓
-FAISS index
+FAISS Index
    ↓
-Stored on disk
+Saved to Disk
 
-
-Text entered by user
+Text Query
    ↓
-CLIP text encoder
+CLIP Text Encoder
    ↓
-Text embedding
+Text Embedding
    ↓
-FAISS similarity search
+FAISS Search
    ↓
-Matching photos
+Matching Photos
 ```
 
-One useful part of this approach is that the project doesn't need a separate dataset with manually created labels. The CLIP model has already learned relationships between images and text.
+---
 
 ## Technologies Used
 
-* **Python**
-* **CLIP** – for converting images and text into embeddings
-* **FAISS** – for similarity search
-* **Gradio** – for the web interface
-* **Pillow** – for loading and processing images
-* **PyTorch** – used by the CLIP model
+* Python
+* CLIP (OpenAI)
+* FAISS
+* Gradio
+* PyTorch
+* Pillow
 
-## Setup
+---
 
-Clone the repository and move into the project folder:
+## Project Structure
 
-```bash
-git clone <your-repo-url>
-cd clip-image-search
+```text
+PROJECT_imagedescriptor/
+
+├── APP.py              # Gradio application
+├── Buildindex.py       # Creates image embeddings and FAISS index
+├── Requirements.txt    # Python dependencies
+├── README.md
+├── photos/             # Your photos
+└── index/              # Generated search index
+    ├── photos.index
+    ├── filenames.json
+    └── config.json
 ```
 
-Create a virtual environment:
+---
+
+# Quick Start
+
+## 1. Clone the Repository
 
 ```bash
-python -m venv venv
+git clone <your-repository-url>
+cd PROJECT_imagedescriptor
 ```
 
-Activate it.
+---
+
+## 2. Create a Virtual Environment
 
 ### Windows
 
 ```bash
+python -m venv venv
 venv\Scripts\activate
 ```
 
-### Linux / macOS
+### macOS / Linux
 
 ```bash
+python3 -m venv venv
 source venv/bin/activate
 ```
 
-Install the required packages:
+---
+
+## 3. Install Dependencies
+
+> **Note:** This project uses `Requirements.txt` with a capital **R**.
 
 ```bash
-pip install -r requirements.txt
+pip install -r Requirements.txt
 ```
 
-## Running the Project
+---
 
-### 1. Add your photos
+## 4. Add Your Photos
 
-Create a `photos` folder and put the images you want to search inside it.
+Create a folder named `photos` inside the project.
 
-The program also checks subfolders, so you can organize your photos however you want.
+```text
+PROJECT_imagedescriptor/
+└── photos/
+    ├── image1.jpg
+    ├── image2.png
+    └── holiday/
+        └── beach.jpg
+```
 
-Supported formats include:
+Supported formats:
 
 * JPG
 * JPEG
@@ -106,153 +142,134 @@ Supported formats include:
 * BMP
 * WEBP
 
-### 2. Build the image index
+Subfolders are supported.
 
-Run:
+---
 
-```bash
-python build_index.py --photos_dir ./photos --output_dir ./index
-```
+## 5. Build the Image Index
 
-This goes through the photos, generates their CLIP embeddings, and saves the FAISS index.
-
-You need to run this again if you add or remove photos from your collection.
-
-The generated files are stored inside the `index` folder.
-
-### 3. Start the application
-
-Run:
+Generate CLIP embeddings for your photos.
 
 ```bash
-python app.py --index_dir ./index
+python Buildindex.py --photos_dir "./photos" --output_dir "./index"
 ```
 
-The terminal will show a local Gradio URL. Open that URL in your browser.
+If your folder name contains spaces, wrap the path in quotes.
 
-Enter a description such as:
+Example:
+
+```bash
+python Buildindex.py --photos_dir "./sample photos" --output_dir "./index"
+```
+
+After this finishes, an `index` folder will be created containing:
+
+* `photos.index`
+* `filenames.json`
+* `config.json`
+
+Run this step again whenever you add or remove photos.
+
+---
+
+## 6. Launch the Application
+
+Start the Gradio app.
+
+```bash
+python APP.py --index_dir "./index"
+```
+
+The terminal will display a local URL similar to:
+
+```text
+http://127.0.0.1:7860
+```
+
+Open that link in your browser.
+
+---
+
+## Example Searches
+
+Try queries like:
 
 ```text
 a person standing near a car
 ```
 
-or:
-
 ```text
 a sunset over the mountains
 ```
 
-The application will show the photos that are closest to the query.
-
-## Project Structure
-
 ```text
-clip-image-search/
-│
-├── build_index.py       # Creates the image embeddings and FAISS index
-├── app.py               # Gradio application
-├── requirements.txt     # Python dependencies
-├── README.md
-│
-├── photos/              # Photos used for searching
-│
-└── index/               # Generated search index
-    ├── photos.index
-    ├── filenames.json
-    └── config.json
+a black dog running
 ```
+
+The app returns the most similar images along with similarity scores.
+
+---
 
 ## Similarity Search
 
-The project uses FAISS to compare the text embedding with the image embeddings.
+The project uses **FAISS IndexFlatIP** for exact inner-product similarity search.
 
-`IndexFlatIP` is used for the search. It performs an exact inner-product search, which works well for a relatively small photo collection.
+This works well for small and medium-sized image collections while providing fast and accurate retrieval.
 
-The application also displays a similarity score with the search results so that the user can get an idea of how closely each image matches the query.
+---
 
 ## Limitations
 
-There are some things that this project does not handle perfectly.
+CLIP performs well for semantic descriptions but may struggle with:
 
-For example, CLIP generally works well with queries such as:
+* Exact object counts (`exactly three dogs`)
+* Fine spatial relationships (`the dog on the left side of the car`)
+* Very detailed scene constraints
 
-```text
-a dog on a beach
-```
+The selected CLIP model (`ViT-B/32` by default) balances speed and accuracy.
 
-but can have difficulty with more specific requests such as:
-
-```text
-exactly three dogs
-```
-
-It can also struggle with detailed spatial relationships, for example:
-
-```text
-the dog on the left side of the car
-```
-
-The choice of CLIP model also affects the results. A smaller model such as `ViT-B/32` is useful when speed and lower resource usage are important, while larger models can provide better results but require more computation.
-
-The current FAISS setup performs an exact search. This is reasonable for a smaller collection of images, but for very large collections, approximate search methods such as `IndexIVFFlat` or `IndexHNSWFlat` could be considered.
+---
 
 ## Possible Improvements
 
-Some features that could be added later are:
+* Image-to-image search
+* Filters (date, folder, file type)
+* Duplicate photo detection
+* Camera metadata search
+* Larger CLIP models
+* Approximate FAISS indexes for huge collections
 
-### Image-to-Image Search
-
-Instead of typing a description, the user could upload an image and find photos that look similar to it.
-
-### Filters
-
-Search results could be combined with filters such as:
-
-* Date
-* File type
-* Folder
-* Image location
-* Camera information
-
-### Duplicate Detection
-
-Image embeddings could also be used to find photos that are very similar to each other and identify possible duplicates.
-
-### Better Search Models
-
-Different CLIP checkpoints could be tested to see how they affect search accuracy and speed.
+---
 
 ## Deployment
 
-The application can be deployed using platforms that support Gradio applications.
+The application can be deployed on platforms that support **Gradio**, such as **Hugging Face Spaces**.
 
-For example, a sample version can be hosted on **Hugging Face Spaces**.
+A typical deployment includes:
 
-A basic deployment would require:
+1. Creating a Gradio Space.
+2. Uploading `APP.py`.
+3. Uploading `Requirements.txt`.
+4. Adding a small sample photo collection.
+5. Building the FAISS index.
+6. Launching the app.
 
-1. Creating a new Space with the Gradio SDK.
-2. Adding `app.py`.
-3. Adding `requirements.txt`.
-4. Adding a small sample image collection.
-5. Creating the FAISS index for those images.
-6. Testing the application through the generated public URL.
-
-For a portfolio project, it is better to use a small set of sample images rather than uploading a complete personal photo library.
+---
 
 ## What I Learned
 
-Through this project, I worked with:
+This project helped me work with:
 
-* Image and text embeddings
-* CLIP
+* CLIP embeddings
 * Vector similarity search
-* FAISS
-* Python
+* FAISS indexing
+* PyTorch
 * Gradio
-* Building a simple search application
-* Working with pretrained models without training a model from scratch
+* Building an end-to-end AI application using pretrained models
 
-The main idea behind the project was to make photo searching more convenient by allowing users to describe what they want instead of remembering filenames or manually going through every image.
+---
+## SHIVI SANJAY
 
 ## Author
-# SHIVI SANJAY
+
+**Shivi Sanjay**
