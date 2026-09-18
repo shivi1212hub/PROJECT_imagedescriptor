@@ -13,7 +13,6 @@ The project uses **CLIP** to understand both images and text, **FAISS** to perfo
 ## How It Works
 
 The project has two main stages:
-
 1. **Build the image index**
 2. **Search the indexed images**
 
